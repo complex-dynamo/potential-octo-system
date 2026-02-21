@@ -1,0 +1,19 @@
+{
+  "name": "TaalAvontuur",
+  "short_name": "TaalAvontuur",
+  "description": "Leer Engels en Japans op een speelse manier!",
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF2F5",
+  "theme_color": "#C794E5",
+  "lang": "nl",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

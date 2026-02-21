@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TaalAvontuur">
+<meta name="theme-color" content="#C794E5">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>TaalAvontuur</title>
+<style>
+/* ========== RESET & BASE ========== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Rounded',system-ui,sans-serif;
+  -webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;
+  background:linear-gradient(to bottom,#FFF2F5,#EDE6FF);touch-action:manipulation}
+body{position:fixed;width:100%;height:100%}
+#app{width:100%;height:100%;overflow:hidden;position:relative}
+
+/* ========== CSS VARIABLES ========== */
+:root{
+  --pink:#FFB5C2;--purple:#C794E5;--blue:#ADD9F2;--yellow:#FFED8C;
+  --green:#8FE6AD;--orange:#FFC880;--mint:#B3F5E1;--gold:#FFD700;
+  --brown:#8C4511;--deep-purple:#7030A0;--bg-top:#FFF2F5;--bg-bottom:#EDE6FF;
+  --safe-top:env(safe-area-inset-top,20px);--safe-bottom:env(safe-area-inset-bottom,0px);
+}
+
+/* ========== SCREEN CONTAINER ========== */
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;
+  background:linear-gradient(to bottom,var(--bg-top),var(--bg-bottom));
+  padding-top:calc(var(--safe-top) + 8px);padding-bottom:var(--safe-bottom);
+  transition:transform .35s cubic-bezier(.4,0,.2,1),opacity .35s ease;overflow:hidden}
+.screen.hidden{display:none}
+.screen-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:24px}
+
+/* ========== TOP BAR ========== */
+.topbar{display:flex;align-items:center;padding:4px 16px 8px;min-height:44px;flex-shrink:0}
+.topbar .back-btn{display:flex;align-items:center;gap:4px;font-size:16px;font-weight:700;
+  color:var(--deep-purple);background:rgba(255,255,255,.9);border:none;border-radius:20px;
+  padding:8px 14px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.topbar .back-btn::before{content:'‹';font-size:22px;font-weight:800;line-height:1}
+.topbar .title{flex:1;text-align:center;font-size:17px;font-weight:700;color:var(--deep-purple);
+  letter-spacing:-.3px}
+.star-badge{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.9);
+  border-radius:20px;padding:6px 12px;font-size:16px;font-weight:800;color:var(--gold);
+  box-shadow:0 2px 6px rgba(255,215,0,.25);cursor:pointer;border:none;transition:transform .2s}
+.star-badge:active{transform:scale(.92)}
+
+/* ========== SPEECH BUBBLE ========== */
+.bubble{background:#fff;border-radius:18px;padding:12px 18px;margin:0 20px;text-align:center;
+  font-size:15px;font-weight:600;color:#333;box-shadow:0 3px 10px rgba(0,0,0,.08);
+  position:relative;line-height:1.4}
+.bubble::after{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);
+  width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;
+  border-top:10px solid #fff}
+
+/* ========== MASCOT ========== */
+.mascot{text-align:center;font-size:64px;animation:bounce 2s ease-in-out infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+
+/* ========== LANGUAGE TOGGLE ========== */
+.lang-toggle{display:flex;background:rgba(255,255,255,.9);border-radius:30px;
+  margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden}
+.lang-btn{border:none;padding:10px 18px;font-size:15px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;gap:6px;background:transparent;transition:all .25s;
+  border-radius:30px;color:#555}
+.lang-btn.active{background:var(--deep-purple);color:#fff}
+
+/* ========== WORLD CARDS ========== */
+.world-card{display:flex;align-items:center;gap:14px;padding:16px;border-radius:20px;
+  margin:0 20px 12px;color:#fff;cursor:pointer;transition:transform .2s;
+  box-shadow:0 4px 14px rgba(0,0,0,.15);position:relative;overflow:hidden}
+.world-card:active{transform:scale(.96)}
+.world-card .icon{font-size:42px;width:58px;height:58px;display:flex;align-items:center;
+  justify-content:center;background:rgba(255,255,255,.3);border-radius:50%;flex-shrink:0}
+.world-card .info{flex:1;min-width:0}
+.world-card .name{font-size:17px;font-weight:800;letter-spacing:-.3px}
+.world-card .sub{font-size:12px;font-weight:600;opacity:.85;margin-top:2px}
+.world-card .progress-bar{height:5px;background:rgba(255,255,255,.3);border-radius:4px;margin-top:6px}
+.world-card .progress-fill{height:100%;background:#fff;border-radius:4px;transition:width .4s}
+.world-card .arrow{font-size:20px;font-weight:800;opacity:.7}
+
+/* ========== ACTIVITY BUTTONS ========== */
+.activity-btn{display:flex;align-items:center;gap:14px;padding:14px 16px;background:#fff;
+  border-radius:18px;margin:0 20px 10px;box-shadow:0 3px 10px rgba(0,0,0,.06);
+  cursor:pointer;transition:transform .2s;border:none;width:calc(100% - 40px);text-align:left}
+.activity-btn:active{transform:scale(.96)}
+.activity-btn .act-icon{font-size:34px;width:52px;height:52px;display:flex;align-items:center;
+  justify-content:center;border-radius:50%;flex-shrink:0}
+.activity-btn .act-info{flex:1}
+.activity-btn .act-name{font-size:18px;font-weight:800;color:#222}
+.activity-btn .act-desc{font-size:12px;font-weight:600;color:#888;margin-top:1px}
+.activity-btn .act-status{font-size:22px;flex-shrink:0}
+
+/* ========== WORD PREVIEW STRIP ========== */
+.word-strip{display:flex;gap:10px;padding:0 20px;overflow-x:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none}
+.word-strip::-webkit-scrollbar{display:none}
+.word-chip{flex-shrink:0;width:64px;padding:8px 0;text-align:center;background:rgba(255,255,255,.8);
+  border-radius:14px;cursor:pointer;transition:transform .2s}
+.word-chip:active{transform:scale(.9)}
+.word-chip .emoji{font-size:28px}
+.word-chip .label{font-size:10px;font-weight:700;color:#888;margin-top:2px}
+
+/* ========== FLASHCARD ========== */
+.card-container{perspective:800px;width:280px;height:360px;margin:0 auto;cursor:pointer}
+.card-inner{position:relative;width:100%;height:100%;transition:transform .5s cubic-bezier(.4,0,.2,1);
+  transform-style:preserve-3d}
+.card-inner.flipped{transform:rotateY(180deg)}
+.card-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:28px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  background:#fff;box-shadow:0 6px 20px rgba(0,0,0,.1)}
+.card-face.back{transform:rotateY(180deg)}
+.card-face .card-emoji{font-size:72px}
+.card-face .card-word{font-size:28px;font-weight:800;color:#333;text-align:center;padding:0 16px}
+.card-face .card-lang{font-size:13px;font-weight:600;color:#999}
+.card-face.back .card-word{color:var(--deep-purple);font-size:24px;line-height:1.3}
+.card-border{border:3px solid rgba(0,0,0,.06)}
+
+/* ========== PROGRESS DOTS ========== */
+.dots{display:flex;gap:8px;justify-content:center}
+.dot{width:10px;height:10px;border-radius:50%;background:rgba(0,0,0,.12);transition:all .3s}
+.dot.active{transform:scale(1.3)}
+.dot.done{background:rgba(0,0,0,.2)}
+
+/* ========== NAV BUTTONS (flashcard) ========== */
+.nav-row{display:flex;align-items:center;justify-content:center;gap:32px;padding:16px}
+.nav-btn{width:56px;height:56px;border-radius:50%;border:none;font-size:26px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:transform .2s;
+  box-shadow:0 3px 10px rgba(0,0,0,.1)}
+.nav-btn:active{transform:scale(.88)}
+.nav-btn:disabled{opacity:.25;cursor:default}
+.nav-btn:disabled:active{transform:none}
+.speaker-btn{background:var(--purple);color:#fff;font-size:22px}
+
+/* ========== MEMORY GAME ========== */
+.memory-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 14px}
+.mem-card{aspect-ratio:.8;border-radius:14px;cursor:pointer;transition:transform .3s;
+  position:relative;perspective:600px}
+.mem-card:active{transform:scale(.94)}
+.mem-card-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;
+  transition:transform .4s cubic-bezier(.4,0,.2,1)}
+.mem-card.face-up .mem-card-inner{transform:rotateY(180deg)}
+.mem-card-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:14px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+.mem-card-back{border-radius:14px;display:flex;align-items:center;justify-content:center;
+  font-size:28px;font-weight:900;color:#fff;position:absolute;inset:0;backface-visibility:hidden}
+.mem-card-front{transform:rotateY(180deg);background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.mem-card-front .mem-emoji{font-size:28px}
+.mem-card-front .mem-text{font-size:11px;font-weight:700;margin-top:4px;text-align:center;
+  padding:0 4px;line-height:1.2;color:var(--deep-purple)}
+.mem-card.matched{opacity:.6;pointer-events:none}
+.mem-card.matched .mem-card-front{border:3px solid var(--green)}
+.mem-stats{display:flex;gap:20px;justify-content:center;font-size:14px;font-weight:700;color:#888}
+
+/* ========== QUIZ ========== */
+.quiz-prompt{text-align:center;padding:16px}
+.quiz-prompt .quiz-emoji{font-size:80px}
+.quiz-prompt .quiz-dutch{font-size:22px;font-weight:800;color:#333;margin-top:8px}
+.quiz-options{display:flex;flex-direction:column;gap:10px;padding:0 20px}
+.quiz-opt{padding:16px 20px;background:#fff;border-radius:16px;font-size:18px;font-weight:700;
+  border:3px solid transparent;cursor:pointer;transition:all .2s;
+  box-shadow:0 2px 8px rgba(0,0,0,.05);text-align:left;display:flex;align-items:center;gap:12px}
+.quiz-opt:active{transform:scale(.97)}
+.quiz-opt.correct{background:#e8f9ef;border-color:var(--green);color:#1a8a4a}
+.quiz-opt.wrong{background:#fde8e8;border-color:#f77;color:#c33;animation:shake .4s}
+.quiz-opt.reveal{border-color:var(--green);background:#e8f9ef}
+.quiz-opt.dimmed{opacity:.4}
+.quiz-score{display:flex;align-items:center;gap:4px;font-size:17px;font-weight:800;color:var(--gold)}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+
+/* ========== DRAWING ========== */
+.draw-prompt{display:flex;align-items:center;gap:12px;padding:10px 16px;margin:0 12px;
+  background:rgba(255,255,255,.9);border-radius:16px;box-shadow:0 2px 6px rgba(0,0,0,.05)}
+.draw-prompt .dp-emoji{font-size:38px}
+.draw-prompt .dp-info{flex:1}
+.draw-prompt .dp-dutch{font-size:16px;font-weight:800;color:#333}
+.draw-prompt .dp-target{font-size:13px;font-weight:700;color:var(--deep-purple)}
+.draw-canvas-wrap{margin:8px 12px;border-radius:20px;overflow:hidden;background:#fff;
+  border:2px solid rgba(0,0,0,.06);flex:1;position:relative;touch-action:none}
+.draw-canvas-wrap canvas{width:100%;height:100%;display:block}
+.draw-tools{display:flex;flex-direction:column;gap:6px;padding:6px 14px;
+  background:rgba(255,255,255,.9);margin:0 12px;border-radius:14px}
+.color-row{display:flex;gap:6px;justify-content:center}
+.color-dot{width:30px;height:30px;border-radius:50%;border:2px solid rgba(0,0,0,.1);
+  cursor:pointer;transition:transform .2s}
+.color-dot.active{transform:scale(1.2);border-color:#fff;box-shadow:0 0 0 2px var(--deep-purple)}
+.width-row{display:flex;gap:10px;justify-content:center;align-items:center}
+.width-dot{border-radius:50%;background:#333;cursor:pointer;transition:transform .2s}
+.width-dot.active{box-shadow:0 0 0 2px var(--deep-purple);transform:scale(1.15)}
+.draw-actions{display:flex;gap:8px;padding:4px 12px 8px;justify-content:space-between}
+.draw-action-btn{border:none;padding:8px 14px;border-radius:20px;font-size:13px;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;gap:4px;transition:transform .2s}
+.draw-action-btn:active{transform:scale(.93)}
+.draw-action-btn.undo{background:#fff;color:#555;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.draw-action-btn.clear{background:#fff;color:#d44;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.draw-action-btn.next{background:var(--purple);color:#fff;box-shadow:0 2px 8px rgba(199,148,229,.3)}
+.draw-action-btn.done{background:var(--green);color:#fff;box-shadow:0 2px 8px rgba(143,230,173,.3)}
+
+/* ========== STARS / PROGRESS SCREEN ========== */
+.star-display{text-align:center;padding:24px 20px;margin:0 20px;background:#fff;
+  border-radius:24px;box-shadow:0 4px 16px rgba(255,215,0,.15)}
+.star-display .star-big{font-size:64px}
+.star-display .star-num{font-size:44px;font-weight:900;color:var(--gold);margin-top:4px}
+.star-display .star-label{font-size:16px;font-weight:600;color:#999}
+.milestone{display:flex;align-items:center;gap:12px;padding:12px;background:#fff;
+  border-radius:16px;margin:0 20px 8px;box-shadow:0 2px 6px rgba(0,0,0,.04)}
+.milestone .ms-icon{font-size:30px;width:44px;height:44px;display:flex;align-items:center;
+  justify-content:center;border-radius:50%}
+.milestone .ms-info{flex:1}
+.milestone .ms-title{font-size:15px;font-weight:700;color:#333}
+.milestone .ms-stars{font-size:12px;font-weight:600;color:#999}
+.milestone.locked .ms-icon{filter:grayscale(.8);opacity:.5}
+.milestone .ms-check{font-size:22px}
+.world-prog{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff;
+  border-radius:14px;margin:0 20px 8px;box-shadow:0 2px 6px rgba(0,0,0,.04)}
+.world-prog .wp-icon{font-size:26px}
+.world-prog .wp-info{flex:1}
+.world-prog .wp-name{font-size:14px;font-weight:700;color:#333}
+.world-prog .wp-bar{height:7px;background:rgba(0,0,0,.06);border-radius:4px;margin-top:4px}
+.world-prog .wp-fill{height:100%;border-radius:4px;transition:width .4s}
+.world-prog .wp-count{font-size:13px;font-weight:800;color:#999}
+
+/* ========== CELEBRATION OVERLAY ========== */
+.celebration{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.35);opacity:0;transition:opacity .3s}
+.celebration.show{opacity:1}
+.celebration .cel-card{background:#fff;border-radius:28px;padding:32px;text-align:center;
+  max-width:300px;width:90%;box-shadow:0 16px 40px rgba(0,0,0,.2);
+  transform:scale(.6);transition:transform .4s cubic-bezier(.34,1.56,.64,1)}
+.celebration.show .cel-card{transform:scale(1)}
+.cel-big{font-size:56px}
+.cel-msg{font-size:26px;font-weight:900;color:var(--deep-purple);margin-top:8px}
+.cel-stars{margin:12px 0;font-size:32px;letter-spacing:4px}
+.cel-sub{font-size:14px;font-weight:600;color:#999}
+.cel-btn{margin-top:16px;border:none;padding:14px 40px;border-radius:25px;font-size:18px;
+  font-weight:800;color:#fff;background:var(--purple);cursor:pointer;
+  box-shadow:0 4px 12px rgba(199,148,229,.35);transition:transform .2s}
+.cel-btn:active{transform:scale(.93)}
+
+/* ========== CONFETTI ========== */
+.confetti-piece{position:fixed;font-size:24px;pointer-events:none;z-index:101;
+  animation:confetti-fall 2.5s ease-in forwards}
+@keyframes confetti-fall{
+  0%{opacity:1;transform:translateY(-60px) rotate(0deg)}
+  100%{opacity:0;transform:translateY(100vh) rotate(720deg)}
+}
+
+/* ========== SECTION HEADER ========== */
+.section-hdr{font-size:18px;font-weight:800;color:var(--deep-purple);padding:12px 24px 6px}
+.section-sub{font-size:13px;font-weight:600;color:#999;padding:0 24px 8px}
+
+/* ========== FLOATING EMOJI ========== */
+.floater{position:absolute;opacity:.25;animation:float 3s ease-in-out infinite;pointer-events:none}
+@keyframes float{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-16px) rotate(8deg)}}
+
+/* ========== UTILITY ========== */
+.gap-8{height:8px}.gap-12{height:12px}.gap-16{height:16px}.gap-20{height:20px}
+.center{text-align:center}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const WORLDS = [
+  { id:0, name:'De Chocoladefabriek', icon:'🍫', sub:'Lekkers & eten',
+    colors:['#B8732F','#8C4511'], words:[
+      {nl:'Chocolade',en:'Chocolate',ja:'チョコレート',ro:'chokorēto',em:'🍫'},
+      {nl:'Snoep',en:'Candy',ja:'キャンディー',ro:'kyandī',em:'🍬'},
+      {nl:'Taart',en:'Cake',ja:'ケーキ',ro:'kēki',em:'🎂'},
+      {nl:'Koekje',en:'Cookie',ja:'クッキー',ro:'kukkī',em:'🍪'},
+      {nl:'IJsje',en:'Ice cream',ja:'アイス',ro:'aisu',em:'🍦'},
+      {nl:'Appel',en:'Apple',ja:'りんご',ro:'ringo',em:'🍎'},
+      {nl:'Banaan',en:'Banana',ja:'バナナ',ro:'banana',em:'🍌'},
+      {nl:'Aardbei',en:'Strawberry',ja:'いちご',ro:'ichigo',em:'🍓'}
+    ]},
+  { id:1, name:'Eenhoorn Vallei', icon:'🦄', sub:'Kleuren & magie',
+    colors:['#D9A0FF','#C794E5'], words:[
+      {nl:'Rood',en:'Red',ja:'あか',ro:'aka',em:'🔴'},
+      {nl:'Blauw',en:'Blue',ja:'あお',ro:'ao',em:'🔵'},
+      {nl:'Geel',en:'Yellow',ja:'きいろ',ro:'kiiro',em:'🟡'},
+      {nl:'Roze',en:'Pink',ja:'ピンク',ro:'pinku',em:'🩷'},
+      {nl:'Paars',en:'Purple',ja:'むらさき',ro:'murasaki',em:'🟣'},
+      {nl:'Groen',en:'Green',ja:'みどり',ro:'midori',em:'🟢'},
+      {nl:'Regenboog',en:'Rainbow',ja:'にじ',ro:'niji',em:'🌈'},
+      {nl:'Ster',en:'Star',ja:'ほし',ro:'hoshi',em:'⭐'}
+    ]},
+  { id:2, name:'De Balletstudio', icon:'🩰', sub:'Lichaam & bewegen',
+    colors:['#FFCCD9','#FF99B3'], words:[
+      {nl:'Hand',en:'Hand',ja:'て',ro:'te',em:'🤚'},
+      {nl:'Voet',en:'Foot',ja:'あし',ro:'ashi',em:'🦶'},
+      {nl:'Hoofd',en:'Head',ja:'あたま',ro:'atama',em:'🗣️'},
+      {nl:'Dansen',en:'Dance',ja:'ダンス',ro:'dansu',em:'💃'},
+      {nl:'Springen',en:'Jump',ja:'ジャンプ',ro:'janpu',em:'🤸'},
+      {nl:'Draaien',en:'Turn',ja:'まわる',ro:'mawaru',em:'🔄'},
+      {nl:'Muziek',en:'Music',ja:'おんがく',ro:'ongaku',em:'🎵'},
+      {nl:'Jurk',en:'Dress',ja:'ドレス',ro:'doresu',em:'👗'}
+    ]},
+  { id:3, name:'Minion Avontuur', icon:'🍌', sub:'Begroetingen',
+    colors:['#FFED8C','#FFD230'], words:[
+      {nl:'Hallo',en:'Hello',ja:'こんにちは',ro:'konnichiwa',em:'👋'},
+      {nl:'Doei',en:'Goodbye',ja:'さようなら',ro:'sayōnara',em:'🫡'},
+      {nl:'Dankjewel',en:'Thank you',ja:'ありがとう',ro:'arigatō',em:'🙏'},
+      {nl:'Ja',en:'Yes',ja:'はい',ro:'hai',em:'✅'},
+      {nl:'Nee',en:'No',ja:'いいえ',ro:'iie',em:'❌'},
+      {nl:'Alsjeblieft',en:'Please',ja:'おねがい',ro:'onegai',em:'🙂'},
+      {nl:'Sorry',en:'Sorry',ja:'ごめんね',ro:'gomen ne',em:'😢'},
+      {nl:'Vriend',en:'Friend',ja:'ともだち',ro:'tomodachi',em:'🤝'}
+    ]},
+  { id:4, name:'De Speelschool', icon:'🏫', sub:'Cijfers & school',
+    colors:['#ADD9F2','#72B5F0'], words:[
+      {nl:'Eén',en:'One',ja:'いち',ro:'ichi',em:'1️⃣'},
+      {nl:'Twee',en:'Two',ja:'に',ro:'ni',em:'2️⃣'},
+      {nl:'Drie',en:'Three',ja:'さん',ro:'san',em:'3️⃣'},
+      {nl:'Vier',en:'Four',ja:'よん',ro:'yon',em:'4️⃣'},
+      {nl:'Vijf',en:'Five',ja:'ご',ro:'go',em:'5️⃣'},
+      {nl:'Boek',en:'Book',ja:'ほん',ro:'hon',em:'📖'},
+      {nl:'Pen',en:'Pen',ja:'ペン',ro:'pen',em:'🖊️'},
+      {nl:'School',en:'School',ja:'がっこう',ro:'gakkō',em:'🏫'}
+    ]}
+];
+
+const MILESTONES = [
+  {stars:5,em:'🌟',title:'Ster Leerling'},
+  {stars:15,em:'🏅',title:'Taal Held'},
+  {stars:30,em:'👑',title:'Taal Kampioen'},
+  {stars:50,em:'🦄',title:'Eenhoorn Meester'}
+];
+
+const ACTIVITIES = [
+  {id:'learn',name:'Leren',icon:'📚',desc:'Nieuwe woordjes leren',stars:1},
+  {id:'memory',name:'Memory',icon:'🃏',desc:'Zoek de paren',stars:2},
+  {id:'quiz',name:'Quiz',icon:'🎯',desc:'Ken jij het woord?',stars:2},
+  {id:'draw',name:'Tekenen',icon:'🎨',desc:'Teken en leer',stars:1}
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  lang: localStorage.getItem('lang') || 'en',
+  stars: parseInt(localStorage.getItem('stars') || '0'),
+  progress: JSON.parse(localStorage.getItem('progress') || '{}')
+};
+
+function save() {
+  localStorage.setItem('lang', state.lang);
+  localStorage.setItem('stars', state.stars);
+  localStorage.setItem('progress', JSON.stringify(state.progress));
+}
+
+function isCompleted(worldId, activityId) {
+  return !!state.progress[`${worldId}_${activityId}_${state.lang}`];
+}
+
+function markComplete(worldId, activityId) {
+  const key = `${worldId}_${activityId}_${state.lang}`;
+  if (!state.progress[key]) {
+    state.progress[key] = true;
+    const act = ACTIVITIES.find(a => a.id === activityId);
+    state.stars += act ? act.stars : 1;
+    save();
+  }
+}
+
+function worldProgress(worldId) {
+  let done = 0;
+  ACTIVITIES.forEach(a => { if (isCompleted(worldId, a.id)) done++; });
+  return done;
+}
+
+function targetWord(w) { return state.lang === 'en' ? w.en : w.ja; }
+function targetDisplay(w) { return state.lang === 'en' ? w.en : `${w.ja}\n(${w.ro})`; }
+function targetSpeak(w) { return state.lang === 'en' ? w.en : w.ja; }
+function langCode() { return state.lang === 'en' ? 'en-US' : 'ja-JP'; }
+function langLabel() { return state.lang === 'en' ? 'Engels' : 'Japans'; }
+function langFlag() { return state.lang === 'en' ? '🇬🇧' : '🇯🇵'; }
+
+// ============================================================
+// SPEECH
+// ============================================================
+const speech = {
+  synth: window.speechSynthesis,
+  speak(text, lang, rate = 0.38) {
+    this.synth.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang; u.rate = rate; u.pitch = 1.15;
+    this.synth.speak(u);
+  },
+  dutch(text) { this.speak(text, 'nl-NL', 0.42); },
+  target(text) { this.speak(text, langCode(), 0.35); },
+  both(nl, target) {
+    this.dutch(nl);
+    setTimeout(() => this.target(target), 1500);
+  },
+  stop() { this.synth.cancel(); }
+};
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+let screenStack = ['menu'];
+let screenData = {};
+
+function navigate(screen, data = {}) {
+  screenStack.push(screen);
+  screenData = data;
+  renderCurrent();
+}
+
+function goBack() {
+  speech.stop();
+  if (screenStack.length > 1) screenStack.pop();
+  screenData = {};
+  renderCurrent();
+}
+
+// ============================================================
+// ICON GENERATOR (for apple-touch-icon)
+// ============================================================
+function generateIcon() {
+  const c = document.createElement('canvas');
+  c.width = 180; c.height = 180;
+  const ctx = c.getContext('2d');
+  const g = ctx.createLinearGradient(0, 0, 180, 180);
+  g.addColorStop(0, '#E8C0FF'); g.addColorStop(1, '#FFB8CC');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(36, 0); ctx.lineTo(144, 0);
+  ctx.quadraticCurveTo(180, 0, 180, 36); ctx.lineTo(180, 144);
+  ctx.quadraticCurveTo(180, 180, 144, 180); ctx.lineTo(36, 180);
+  ctx.quadraticCurveTo(0, 180, 0, 144); ctx.lineTo(0, 36);
+  ctx.quadraticCurveTo(0, 0, 36, 0);
+  ctx.fill();
+  ctx.font = '90px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('🦄', 90, 80);
+  ctx.font = '32px serif';
+  ctx.fillText('✨', 36, 148); ctx.fillText('⭐', 144, 148);
+  const link = document.querySelector('link[rel="apple-touch-icon"]');
+  if (link) link.href = c.toDataURL('image/png');
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function shuffle(arr) { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+function confetti() {
+  const ems = ['⭐','🎉','✨','🌟','💖','🦄','🎊','💫','🩷'];
+  for (let i = 0; i < 25; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.textContent = ems[i % ems.length];
+    el.style.left = (Math.random() * 100) + '%';
+    el.style.animationDelay = (i * 0.08) + 's';
+    el.style.fontSize = (18 + Math.random() * 16) + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+  }
+}
+
+function topbar(title, showBack = true) {
+  return `<div class="topbar">
+    ${showBack ? `<button class="back-btn" onclick="goBack()">Terug</button>` : '<div></div>'}
+    <div class="title">${title}</div>
+    <button class="star-badge" onclick="navigate('stars')">⭐ ${state.stars}</button>
+  </div>`;
+}
+
+// ============================================================
+// SCREENS
+// ============================================================
+
+// ---------- MENU ----------
+function renderMenu() {
+  const floaters = [
+    {em:'🦄',x:10,y:15,s:28,d:'2.5s'},{em:'⭐',x:80,y:8,s:22,d:'3s'},
+    {em:'🍫',x:15,y:50,s:24,d:'3.5s'},{em:'🩰',x:85,y:45,s:26,d:'2.8s'},
+    {em:'🌈',x:8,y:75,s:28,d:'3.2s'},{em:'🍌',x:78,y:72,s:24,d:'2.6s'}
+  ];
+  let html = `<div class="screen" id="screen-menu">`;
+  // floaters
+  floaters.forEach(f => {
+    html += `<div class="floater" style="left:${f.x}%;top:${f.y}%;font-size:${f.s}px;animation-duration:${f.d}">${f.em}</div>`;
+  });
+  html += `<div class="topbar"><div></div><div class="title"></div>
+    <button class="star-badge" onclick="navigate('stars')">⭐ ${state.stars}</button></div>`;
+  html += `<div class="screen-scroll">`;
+  // mascot + bubble
+  html += `<div class="gap-8"></div>
+    <div class="bubble">Hallo! Welkom bij TaalAvontuur!<br>Kies een wereld om te beginnen!</div>
+    <div class="gap-8"></div>
+    <div class="mascot">🦄</div>
+    <div class="gap-12"></div>`;
+  // language toggle
+  html += `<div style="display:flex;justify-content:center">
+    <div class="lang-toggle">
+      <button class="lang-btn ${state.lang==='en'?'active':''}" onclick="setLang('en')">🇬🇧 Engels</button>
+      <button class="lang-btn ${state.lang==='ja'?'active':''}" onclick="setLang('ja')">🇯🇵 Japans</button>
+    </div></div>`;
+  // worlds
+  html += `<div class="gap-16"></div><div class="section-hdr">Kies een wereld</div><div class="gap-8"></div>`;
+  WORLDS.forEach(w => {
+    const prog = worldProgress(w.id);
+    const pct = (prog / 4 * 100).toFixed(0);
+    html += `<div class="world-card" style="background:linear-gradient(135deg,${w.colors[0]},${w.colors[1]})"
+      onclick="navigate('world',{worldId:${w.id}})">
+      <div class="icon">${w.icon}</div>
+      <div class="info">
+        <div class="name">${w.name}</div>
+        <div class="sub">${w.sub}</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="arrow">›</div>
+    </div>`;
+  });
+  html += `<div class="gap-20"></div></div></div>`;
+  return html;
+}
+
+function setLang(l) {
+  state.lang = l; save();
+  speech.dutch('Nu leren we ' + langLabel());
+  renderCurrent();
+}
+
+// ---------- WORLD DETAIL ----------
+function renderWorld() {
+  const w = WORLDS[screenData.worldId];
+  let html = `<div class="screen" style="background:linear-gradient(to bottom,${w.colors[0]}22,var(--bg-bottom))">`;
+  html += topbar(w.icon + ' ' + w.name);
+  html += `<div class="screen-scroll">`;
+  // header
+  html += `<div class="center"><div style="font-size:64px;margin-top:4px">${w.icon}</div>
+    <div style="font-size:22px;font-weight:800;color:var(--deep-purple);margin-top:4px">${w.name}</div>
+    <div style="font-size:14px;font-weight:600;color:#999;margin-top:2px">${w.sub}</div>
+    <div style="margin-top:8px;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.8);
+      padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;color:#888">
+      ${langFlag()} Je leert: ${langLabel()}</div>
+  </div>`;
+  // activities
+  html += `<div class="gap-16"></div>`;
+  ACTIVITIES.forEach(a => {
+    const done = isCompleted(w.id, a.id);
+    html += `<button class="activity-btn" onclick="startActivity(${w.id},'${a.id}')">
+      <div class="act-icon" style="background:${w.colors[0]}22">${a.icon}</div>
+      <div class="act-info"><div class="act-name">${a.name}</div><div class="act-desc">${a.desc}</div></div>
+      <div class="act-status">${done ? '⭐' : '▶️'}</div>
+    </button>`;
+  });
+  // word preview
+  html += `<div class="gap-12"></div><div class="section-sub">Woordjes in deze wereld:</div>
+    <div class="word-strip">`;
+  w.words.forEach(word => {
+    html += `<div class="word-chip" onclick="speech.dutch('${word.nl}')">
+      <div class="emoji">${word.em}</div><div class="label">${word.nl}</div></div>`;
+  });
+  html += `</div><div class="gap-20"></div></div></div>`;
+  return html;
+}
+
+function startActivity(worldId, actId) {
+  navigate(actId, { worldId });
+}
+
+// ---------- FLASHCARD LEARN ----------
+let learnState = {};
+
+function renderLearn() {
+  const w = WORLDS[screenData.worldId];
+  if (!learnState.words) {
+    learnState = { words: w.words, idx: 0, flipped: false };
+    setTimeout(() => speech.dutch('Tik op de kaart!'), 400);
+  }
+  const word = learnState.words[learnState.idx];
+  const isFlipped = learnState.flipped;
+  const isLast = learnState.idx >= learnState.words.length - 1;
+
+  let html = `<div class="screen" style="background:linear-gradient(to bottom,${w.colors[0]}22,var(--bg-bottom))">`;
+  html += topbar('📚 Leren');
+  html += `<div class="screen-scroll" style="display:flex;flex-direction:column;align-items:center;justify-content:space-between">`;
+  // bubble
+  html += `<div class="bubble" style="margin-top:8px">${isFlipped ? 'Tik op 🔊 om het te horen!' : 'Tik op de kaart!'}</div>`;
+  // card
+  html += `<div class="card-container" onclick="flipCard()">
+    <div class="card-inner ${isFlipped ? 'flipped' : ''}">
+      <div class="card-face card-border" style="border-color:${w.colors[0]}44">
+        <div class="card-emoji">${word.em}</div>
+        <div class="card-word">${word.nl}</div>
+        <div class="card-lang">🇳🇱 Nederlands</div>
+      </div>
+      <div class="card-face back card-border" style="border-color:${w.colors[0]}88;
+        background:linear-gradient(to bottom,#fff,${w.colors[0]}11)">
+        <div class="card-emoji">${word.em}</div>
+        <div class="card-word" style="white-space:pre-line">${targetDisplay(word)}</div>
+        <div class="card-lang">${langFlag()} ${langLabel()}</div>
+      </div>
+    </div>
+  </div>`;
+  // dots
+  html += `<div class="dots" style="margin:12px 0">`;
+  for (let i = 0; i < learnState.words.length; i++) {
+    const cls = i === learnState.idx ? 'dot active' : (i < learnState.idx ? 'dot done' : 'dot');
+    html += `<div class="${cls}" style="${i===learnState.idx ? 'background:'+w.colors[0] : (i<learnState.idx ? 'background:'+w.colors[0]+'88' : '')}"></div>`;
+  }
+  html += `</div>`;
+  // nav
+  html += `<div class="nav-row">
+    <button class="nav-btn" style="background:#fff;color:${w.colors[0]}" onclick="learnPrev()" ${learnState.idx<=0?'disabled':''}>‹</button>
+    <button class="nav-btn speaker-btn" onclick="speakLearnCard()">🔊</button>
+    <button class="nav-btn" style="background:${isLast?'var(--green)':w.colors[0]};color:#fff"
+      onclick="${isLast?'finishLearn('+w.id+')':'learnNext()'}">
+      ${isLast ? '✓' : '›'}</button>
+  </div>`;
+  html += `</div></div>`;
+  return html;
+}
+
+function flipCard() {
+  learnState.flipped = !learnState.flipped;
+  const word = learnState.words[learnState.idx];
+  if (learnState.flipped) speech.target(targetSpeak(word));
+  else speech.dutch(word.nl);
+  renderCurrent();
+}
+function learnPrev() { if (learnState.idx > 0) { learnState.idx--; learnState.flipped = false; renderCurrent(); setTimeout(() => speech.dutch(learnState.words[learnState.idx].nl), 300); } }
+function learnNext() { if (learnState.idx < learnState.words.length - 1) { learnState.idx++; learnState.flipped = false; renderCurrent(); setTimeout(() => speech.dutch(learnState.words[learnState.idx].nl), 300); } }
+function speakLearnCard() {
+  const word = learnState.words[learnState.idx];
+  if (learnState.flipped) speech.target(targetSpeak(word));
+  else speech.dutch(word.nl);
+}
+function finishLearn(worldId) { markComplete(worldId, 'learn'); showCelebration('Alle woordjes geleerd!', 1); }
+
+// ---------- MEMORY GAME ----------
+let memState = {};
+
+function renderMemory() {
+  const w = WORLDS[screenData.worldId];
+  if (!memState.cards) initMemory(w);
+
+  let html = `<div class="screen" style="background:linear-gradient(to bottom,${w.colors[0]}22,var(--bg-bottom))">`;
+  html += topbar('🃏 Memory');
+  html += `<div class="screen-scroll">`;
+  html += `<div class="bubble" style="margin:4px 20px">Zoek de paren! Tik op twee kaarten.</div>`;
+  html += `<div class="mem-stats" style="margin:8px 0">
+    <div>👆 ${memState.moves}</div><div>✅ ${memState.matched}/${memState.pairCount}</div></div>`;
+  html += `<div class="memory-grid">`;
+  memState.cards.forEach((card, i) => {
+    const faceUp = card.faceUp || card.matched;
+    html += `<div class="mem-card ${faceUp ? 'face-up' : ''} ${card.matched ? 'matched' : ''}"
+      onclick="memTap(${i})">
+      <div class="mem-card-inner">
+        <div class="mem-card-back" style="background:linear-gradient(135deg,${w.colors[0]},${w.colors[1]})">?</div>
+        <div class="mem-card-front">
+          <div class="mem-emoji">${card.isEmoji ? card.word.em : card.word.em}</div>
+          <div class="mem-text">${card.isEmoji ? card.word.nl : targetDisplay(card.word).replace('\n','<br>')}</div>
+        </div>
+      </div>
+    </div>`;
+  });
+  html += `</div><div class="gap-20"></div></div></div>`;
+  return html;
+}
+
+function initMemory(w) {
+  const words = shuffle(w.words).slice(0, 6);
+  let cards = [];
+  words.forEach(word => {
+    cards.push({ word, isEmoji: true, faceUp: false, matched: false });
+    cards.push({ word, isEmoji: false, faceUp: false, matched: false });
+  });
+  memState = { cards: shuffle(cards), first: null, processing: false, moves: 0, matched: 0, pairCount: 6 };
+  setTimeout(() => speech.dutch('Zoek de paren!'), 400);
+}
+
+function memTap(i) {
+  if (memState.processing) return;
+  const card = memState.cards[i];
+  if (card.faceUp || card.matched) return;
+  card.faceUp = true;
+  // speak
+  if (card.isEmoji) speech.dutch(card.word.nl); else speech.target(targetSpeak(card.word));
+  renderCurrent();
+
+  if (memState.first === null) {
+    memState.first = i;
+  } else {
+    memState.moves++;
+    memState.processing = true;
+    const firstCard = memState.cards[memState.first];
+    if (firstCard.word === card.word && firstCard.isEmoji !== card.isEmoji) {
+      // match!
+      setTimeout(() => {
+        firstCard.matched = true; card.matched = true;
+        memState.matched++;
+        memState.first = null; memState.processing = false;
+        renderCurrent();
+        if (memState.matched >= memState.pairCount) {
+          setTimeout(() => {
+            markComplete(screenData.worldId, 'memory');
+            showCelebration('Alle paren gevonden!', 2);
+          }, 400);
+        }
+      }, 500);
+    } else {
+      // no match
+      setTimeout(() => {
+        firstCard.faceUp = false; card.faceUp = false;
+        memState.first = null; memState.processing = false;
+        renderCurrent();
+      }, 900);
+    }
+  }
+}
+
+// ---------- QUIZ GAME ----------
+let quizState = {};
+
+function renderQuiz() {
+  const w = WORLDS[screenData.worldId];
+  if (!quizState.questions) initQuiz(w);
+  if (quizState.idx >= quizState.questions.length) return '';
+
+  const q = quizState.questions[quizState.idx];
+  let html = `<div class="screen" style="background:linear-gradient(to bottom,${w.colors[0]}22,var(--bg-bottom))">`;
+  html += topbar('🎯 Quiz');
+  html += `<div class="screen-scroll" style="display:flex;flex-direction:column">`;
+  // progress + score
+  html += `<div style="display:flex;align-items:center;padding:4px 24px">
+    <div class="dots" style="flex:1">`;
+  for (let i = 0; i < quizState.questions.length; i++) {
+    html += `<div class="dot ${i===quizState.idx?'active':''} ${i<quizState.idx?'done':''}"
+      style="${i===quizState.idx?'background:'+w.colors[0]:''}"></div>`;
+  }
+  html += `</div><div class="quiz-score">⭐ ${quizState.score}</div></div>`;
+  // bubble
+  html += `<div class="bubble" style="margin:8px 20px">Welk woord hoort bij het plaatje?</div>`;
+  // prompt
+  html += `<div class="quiz-prompt">
+    <div class="quiz-emoji">${q.correct.em}</div>
+    <div class="quiz-dutch">${q.correct.nl}</div>
+    <div style="margin-top:8px"><button class="nav-btn speaker-btn" style="width:44px;height:44px;display:inline-flex"
+      onclick="speech.both('${q.correct.nl}','${targetSpeak(q.correct).replace(/'/g,"\\'")}')">🔊</button></div>
+  </div>`;
+  // options
+  html += `<div style="flex:1"></div><div class="quiz-options">`;
+  q.options.forEach((opt, oi) => {
+    let cls = 'quiz-opt';
+    if (quizState.answered !== null) {
+      if (oi === quizState.answered && opt === q.correct) cls += ' correct';
+      else if (oi === quizState.answered) cls += ' wrong';
+      else if (opt === q.correct) cls += ' reveal';
+      else cls += ' dimmed';
+    }
+    html += `<div class="${cls}" onclick="quizAnswer(${oi})">${targetDisplay(opt).replace('\n',' ')}</div>`;
+  });
+  html += `</div><div class="gap-20"></div></div></div>`;
+  return html;
+}
+
+function initQuiz(w) {
+  const shuffled = shuffle(w.words);
+  const questions = shuffled.map(correct => {
+    const wrongs = shuffle(w.words.filter(x => x !== correct)).slice(0, 2);
+    return { correct, options: shuffle([correct, ...wrongs]) };
+  });
+  quizState = { questions, idx: 0, score: 0, answered: null };
+  setTimeout(() => speech.dutch(shuffled[0].nl), 400);
+}
+
+function quizAnswer(oi) {
+  if (quizState.answered !== null) return;
+  const q = quizState.questions[quizState.idx];
+  quizState.answered = oi;
+  const isCorrect = q.options[oi] === q.correct;
+  if (isCorrect) { quizState.score++; speech.target(targetSpeak(q.correct)); }
+  renderCurrent();
+
+  setTimeout(() => {
+    if (quizState.idx < quizState.questions.length - 1) {
+      quizState.idx++; quizState.answered = null;
+      renderCurrent();
+      speech.dutch(quizState.questions[quizState.idx].correct.nl);
+    } else {
+      markComplete(screenData.worldId, 'quiz');
+      showCelebration(`Super! ${quizState.score}/${quizState.questions.length} goed!`, 2);
+    }
+  }, 1400);
+}
+
+// ---------- DRAWING ----------
+let drawState = {};
+let drawCanvas, drawCtx;
+
+function renderDraw() {
+  const w = WORLDS[screenData.worldId];
+  if (!drawState.words) {
+    drawState = { words: w.words, idx: 0, lines: [], currentLine: null };
+    setTimeout(() => speech.dutch('Teken ' + w.words[0].nl + '!'), 400);
+  }
+  const word = drawState.words[drawState.idx];
+  const isLast = drawState.idx >= drawState.words.length - 1;
+  const colors = ['#000','#E33','#FF69B4','#7030A0','#22F','#1A1','#F80','#8C4511'];
+
+  let html = `<div class="screen" style="background:linear-gradient(to bottom,${w.colors[0]}15,var(--bg-bottom))">`;
+  html += topbar('🎨 Tekenen');
+  // prompt
+  html += `<div class="draw-prompt">
+    <div class="dp-emoji">${word.em}</div>
+    <div class="dp-info"><div class="dp-dutch">Teken: ${word.nl}</div>
+      <div class="dp-target">${targetDisplay(word).replace('\n',' ')}</div></div>
+    <button class="nav-btn speaker-btn" style="width:40px;height:40px;font-size:18px;flex-shrink:0"
+      onclick="speech.both('${word.nl}','${targetSpeak(word).replace(/'/g,"\\'")}')">🔊</button>
+  </div>`;
+  // canvas
+  html += `<div class="draw-canvas-wrap" id="draw-wrap"><canvas id="draw-canvas"></canvas></div>`;
+  // tools
+  html += `<div class="draw-tools"><div class="color-row">`;
+  colors.forEach((c, i) => {
+    html += `<div class="color-dot ${(drawState.color||'#000')===c?'active':''}"
+      style="background:${c}" onclick="setDrawColor('${c}')"></div>`;
+  });
+  html += `</div><div class="width-row">`;
+  [2, 4, 8].forEach(w => {
+    html += `<div class="width-dot ${(drawState.width||4)===w?'active':''}"
+      style="width:${w*3+8}px;height:${w*3+8}px" onclick="setDrawWidth(${w})"></div>`;
+  });
+  html += `</div></div>`;
+  // actions
+  html += `<div class="draw-actions">
+    <button class="draw-action-btn undo" onclick="drawUndo()">↩ Stap terug</button>
+    <button class="draw-action-btn clear" onclick="drawClear()">🗑 Wissen</button>
+    <button class="draw-action-btn ${isLast?'done':'next'}" onclick="${isLast?'finishDraw('+screenData.worldId+')':'drawNext()'}">
+      ${isLast ? '✓ Klaar!' : '→ Volgende'}</button>
+  </div>`;
+  html += `</div>`;
+  return html;
+}
+
+function initDrawCanvas() {
+  const wrap = document.getElementById('draw-wrap');
+  drawCanvas = document.getElementById('draw-canvas');
+  if (!wrap || !drawCanvas) return;
+  drawCanvas.width = wrap.clientWidth * 2;
+  drawCanvas.height = wrap.clientHeight * 2;
+  drawCanvas.style.width = wrap.clientWidth + 'px';
+  drawCanvas.style.height = wrap.clientHeight + 'px';
+  drawCtx = drawCanvas.getContext('2d');
+  drawCtx.scale(2, 2);
+  drawCtx.lineCap = 'round'; drawCtx.lineJoin = 'round';
+
+  // Redraw existing lines
+  redrawLines();
+
+  // Draw placeholder
+  if (drawState.lines.length === 0) {
+    const word = drawState.words[drawState.idx];
+    drawCtx.font = '80px serif';
+    drawCtx.textAlign = 'center'; drawCtx.textBaseline = 'middle';
+    drawCtx.globalAlpha = 0.12;
+    drawCtx.fillText(word.em, wrap.clientWidth / 2, wrap.clientHeight / 2);
+    drawCtx.globalAlpha = 1;
+  }
+
+  let drawing = false;
+  function getPos(e) {
+    const r = drawCanvas.getBoundingClientRect();
+    const t = e.touches ? e.touches[0] : e;
+    return { x: t.clientX - r.left, y: t.clientY - r.top };
+  }
+  function start(e) {
+    e.preventDefault(); drawing = true;
+    const p = getPos(e);
+    drawState.currentLine = { color: drawState.color || '#000', width: drawState.width || 4, points: [p] };
+    drawCtx.beginPath(); drawCtx.moveTo(p.x, p.y);
+    drawCtx.strokeStyle = drawState.currentLine.color;
+    drawCtx.lineWidth = drawState.currentLine.width;
+  }
+  function move(e) {
+    if (!drawing) return; e.preventDefault();
+    const p = getPos(e);
+    drawState.currentLine.points.push(p);
+    drawCtx.lineTo(p.x, p.y); drawCtx.stroke();
+    drawCtx.beginPath(); drawCtx.moveTo(p.x, p.y);
+  }
+  function end(e) {
+    if (!drawing) return; drawing = false;
+    if (drawState.currentLine && drawState.currentLine.points.length > 0) {
+      drawState.lines.push(drawState.currentLine);
+    }
+    drawState.currentLine = null;
+  }
+  drawCanvas.addEventListener('touchstart', start, { passive: false });
+  drawCanvas.addEventListener('touchmove', move, { passive: false });
+  drawCanvas.addEventListener('touchend', end);
+  drawCanvas.addEventListener('mousedown', start);
+  drawCanvas.addEventListener('mousemove', move);
+  drawCanvas.addEventListener('mouseup', end);
+  drawCanvas.addEventListener('mouseleave', end);
+}
+
+function redrawLines() {
+  if (!drawCtx || !drawCanvas) return;
+  const wrap = document.getElementById('draw-wrap');
+  drawCtx.clearRect(0, 0, wrap.clientWidth, wrap.clientHeight);
+  drawState.lines.forEach(line => {
+    if (line.points.length < 2) return;
+    drawCtx.beginPath(); drawCtx.strokeStyle = line.color; drawCtx.lineWidth = line.width;
+    drawCtx.moveTo(line.points[0].x, line.points[0].y);
+    for (let i = 1; i < line.points.length; i++) drawCtx.lineTo(line.points[i].x, line.points[i].y);
+    drawCtx.stroke();
+  });
+}
+
+function setDrawColor(c) { drawState.color = c; renderCurrent(); }
+function setDrawWidth(w) { drawState.width = w; renderCurrent(); }
+function drawUndo() { drawState.lines.pop(); renderCurrent(); }
+function drawClear() { drawState.lines = []; renderCurrent(); }
+function drawNext() {
+  drawState.idx++; drawState.lines = [];
+  const word = drawState.words[drawState.idx];
+  speech.dutch('Teken ' + word.nl + '!');
+  renderCurrent();
+}
+function finishDraw(worldId) { markComplete(worldId, 'draw'); showCelebration('Mooie tekening!', 1); }
+
+// ---------- STARS / PROGRESS ----------
+function renderStars() {
+  let html = `<div class="screen">`;
+  html += `<div class="topbar">
+    <button class="back-btn" onclick="goBack()">Terug</button>
+    <div class="title">Mijn Sterren</div><div></div></div>`;
+  html += `<div class="screen-scroll">`;
+  // big star display
+  html += `<div class="star-display">
+    <div class="star-big">⭐</div>
+    <div class="star-num">${state.stars}</div>
+    <div class="star-label">sterren verzameld!</div></div>`;
+  // milestones
+  html += `<div class="gap-16"></div><div class="section-hdr">Beloningen</div>`;
+  MILESTONES.forEach(m => {
+    const unlocked = state.stars >= m.stars;
+    html += `<div class="milestone ${unlocked?'':'locked'}">
+      <div class="ms-icon" style="background:${unlocked?'#FFD70033':'#eee'}">${m.em}</div>
+      <div class="ms-info"><div class="ms-title">${m.title}</div>
+        <div class="ms-stars">${m.stars} sterren</div></div>
+      <div class="ms-check">${unlocked ? '✅' : `${m.stars - state.stars} te gaan`}</div>
+    </div>`;
+  });
+  // per-world progress
+  html += `<div class="gap-16"></div><div class="section-hdr">Voortgang ${langFlag()}</div>`;
+  WORLDS.forEach(w => {
+    const done = worldProgress(w.id);
+    const pct = (done / 4 * 100).toFixed(0);
+    html += `<div class="world-prog">
+      <div class="wp-icon">${w.icon}</div>
+      <div class="wp-info"><div class="wp-name">${w.name}</div>
+        <div class="wp-bar"><div class="wp-fill" style="width:${pct}%;background:linear-gradient(90deg,${w.colors[0]},${w.colors[1]})"></div></div></div>
+      <div class="wp-count" style="${done===4?'color:var(--green)':''}">${done}/4</div>
+    </div>`;
+  });
+  html += `<div class="gap-20"></div></div></div>`;
+  return html;
+}
+
+// ---------- CELEBRATION ----------
+let celebrationCallback = null;
+
+function showCelebration(msg, stars) {
+  confetti();
+  const el = document.createElement('div');
+  el.className = 'celebration';
+  el.innerHTML = `<div class="cel-card">
+    <div class="cel-big">🎉</div>
+    <div class="cel-msg">${msg}</div>
+    <div class="cel-stars">${'⭐'.repeat(stars)}</div>
+    <div class="cel-sub">Je hebt ${stars} ${stars===1?'ster':'sterren'} verdiend!</div>
+    <button class="cel-btn" onclick="dismissCelebration()">Verder!</button>
+  </div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+}
+
+function dismissCelebration() {
+  const el = document.querySelector('.celebration');
+  if (el) { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }
+  // go back to world
+  goBack();
+}
+
+// ============================================================
+// RENDER ENGINE
+// ============================================================
+function renderCurrent() {
+  const screen = screenStack[screenStack.length - 1];
+  let html = '';
+  // reset game state when navigating away
+  switch (screen) {
+    case 'menu': learnState = {}; memState = {}; quizState = {}; drawState = {}; html = renderMenu(); break;
+    case 'world': learnState = {}; memState = {}; quizState = {}; drawState = {}; html = renderWorld(); break;
+    case 'learn': memState = {}; quizState = {}; drawState = {}; html = renderLearn(); break;
+    case 'memory': learnState = {}; quizState = {}; drawState = {}; html = renderMemory(); break;
+    case 'quiz': learnState = {}; memState = {}; drawState = {}; html = renderQuiz(); break;
+    case 'draw': learnState = {}; memState = {}; quizState = {}; html = renderDraw(); break;
+    case 'stars': html = renderStars(); break;
+  }
+  document.getElementById('app').innerHTML = html;
+  // post-render hooks
+  if (screen === 'draw') setTimeout(initDrawCanvas, 50);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  generateIcon();
+  renderCurrent();
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+  // iOS speech workaround: need user gesture to init speech
+  document.addEventListener('touchstart', function initSpeech() {
+    const u = new SpeechSynthesisUtterance('');
+    u.volume = 0;
+    speechSynthesis.speak(u);
+    document.removeEventListener('touchstart', initSpeech);
+  }, { once: true });
+});
+</script>
+</body>
+</html>
