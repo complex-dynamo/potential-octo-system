@@ -453,8 +453,8 @@ const speech = {
     u.lang = lang; u.rate = rate; u.pitch = 1.1;
     this.synth.speak(u);
   },
-  dutch(text) { this.speak(text, 'nl-NL', 0.92); },
-  target(text) { this.speak(text, langCode(), state.lang === 'en' ? 0.88 : 0.82); },
+  dutch(text) { this.speak(text, 'nl-NL', 1.0); },
+  target(text) { this.speak(text, langCode(), state.lang === 'en' ? 1.0 : 0.92); },
   both(nl, target) {
     this.dutch(nl);
     setTimeout(() => this.target(target), 1200);
